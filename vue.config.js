@@ -1,6 +1,9 @@
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
-  transpileDependencies: true,
+    publicPath: './',
+    outputDir: 'dist',
+    assetsDir: 'assets',
+    transpileDependencies: true,
     configureWebpack: (config) => {
         config.module.rules.push({
             test: /\.glsl$/,
