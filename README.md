@@ -4,13 +4,11 @@ webgl示例
 ## 技术栈
 前端框架 [vue2](https://v2.cn.vuejs.org/)   
 UI框架 [element](https://element.eleme.cn/#/zh-CN/component/installation)     
-WebGL [webgl](https://webglfundamentals.org/webgl/lessons/zh_cn/webgl-fundamentals.html)
+WebGL [webgl](https://webglfundamentals.org/webgl/lessons/zh_cn/webgl-fundamentals.html)     
+矩阵库 [glMatrix](https://glmatrix.net/)
 
 ## 项目安装
 
-```sh
-cd 子项目根目录
-```
 
 ```sh
 npm install
