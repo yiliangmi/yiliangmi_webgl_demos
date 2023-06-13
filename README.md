@@ -5,7 +5,8 @@ webgl示例
 前端框架 [vue2](https://v2.cn.vuejs.org/)   
 UI框架 [element](https://element.eleme.cn/#/zh-CN/component/installation)     
 WebGL [webgl](https://webglfundamentals.org/webgl/lessons/zh_cn/webgl-fundamentals.html)     
-矩阵库 [glMatrix](https://glmatrix.net/)
+矩阵库 [glMatrix](https://glmatrix.net/)   
+webpack编译glsl文件 [webpack-glsl-loader ](https://www.cnblogs.com/yiliangmi/p/17306400.html)
 
 ## 项目安装
 

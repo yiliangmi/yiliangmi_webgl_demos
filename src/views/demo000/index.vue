@@ -10,6 +10,9 @@
 <script>
 import vShaderSource from './shaders/vShader.glsl';
 import fShaderSource from './shaders/fShader.glsl'
+
+import {resizeCanvasToDisplaySize} from "@/utils/myCommon";
+
 export default {
   name: 'home',
   mounted() {
@@ -19,7 +22,7 @@ export default {
     })
   },
   data() {
-    return{
+    return {
       canvas: null,  // canvas对象
       gl: null,   // webgl上下文
       shaderProgram: null,  // 程序对象
@@ -42,7 +45,7 @@ export default {
       let context = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
       if (context) {
         this.gl = context;
-      }else{
+      } else {
         alert('浏览器不支持webgl');
       }
     },
@@ -134,17 +137,17 @@ export default {
       let rectangleVertex = [
         // 第一个三角形： x,y,z,r,g,b,a
         0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
-        -0.5, 0.5, 0.0, 0.0,1.0, 0.0, 1.0,
-        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0,1.0,
+        -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0,
+        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 1.0,
         // 第二个三角形： x,y,z,r,g,b,a
-        0.5, 0.5, 0.0, 0.0,1.0, 0.0, 1.0,
+        0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0,
         -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
-        0.5, -0.5, 0.0, 0.0, 0.0, 1.0,1.0,
+        0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 1.0,
       ];
       // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.rectangleVertexBuffer);
       //把顶点数据发送到绑定的缓冲
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(rectangleVertex),this.gl.STATIC_DRAW);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(rectangleVertex), this.gl.STATIC_DRAW);
     },
     /**
      * 绘制
@@ -164,8 +167,10 @@ export default {
      *  设置视口和画布
      */
     setupViewport() {
-      // 设置视口
-      this.gl.viewport(0.0, 0.0, this.canvas.width, this.canvas.height);
+      // 设置画布的显示尺寸和 画布的drawingbuffer尺寸相同
+      resizeCanvasToDisplaySize(this.gl.canvas)
+      // 告诉WebGL如何将裁剪空间（-1 到 +1）中的点转换到像素空间， 也就是画布内
+      this.gl.viewport(0.0, 0.0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight);
       // 设置清除画布的背景色
       this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
       // 开启深度检测
@@ -230,7 +235,7 @@ export default {
 
       // 绘制三角形，从第0个点开始绘制。绘制需要使用到6个点。
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    }
+    },
   }
 }
 </script>
@@ -260,8 +265,8 @@ export default {
 
 .myCanvas {
   margin: 15px 0;
-  width: 60vh;
-  height: 60vh;
+  width: 600px;
+  height: 600px;
 }
 
 </style>

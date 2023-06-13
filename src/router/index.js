@@ -34,12 +34,12 @@ const routes = [
             component: () => import('@/views/demoList/index.vue')
         },
         {
-            path: '/demo001',
-            name: '001绘制简单的多边形',
+            path: '/demo000',
+            name: '000绘制简单的多边形',
             meta:{
               isDemo: true
             },
-            component: () => import('@/views/demo001/index.vue')
+            component: () => import('@/views/demo000/index.vue')
         },
     ]
   }
