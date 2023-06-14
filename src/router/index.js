@@ -41,6 +41,14 @@ const routes = [
             },
             component: () => import('@/views/demo000/index.vue')
         },
+        {
+            path: '/demo001',
+            name: 'demo001利用裁剪坐标（坐标范围是 -1 到 +1）绘制简单的三角形',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo001/index.vue')
+        },
     ]
   }
 ]
