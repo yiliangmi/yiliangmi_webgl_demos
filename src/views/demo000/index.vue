@@ -265,7 +265,7 @@ export default {
 
 .myCanvas {
   margin: 15px 0;
-  width: 600px;
+  width: 800px;
   height: 600px;
 }
 
