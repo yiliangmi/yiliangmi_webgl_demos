@@ -81,7 +81,7 @@ export default {
 
       this.gl.vertexAttribPointer(vertexPositionIndex, size, type, normalize, stride, offset);
 
-      // 绘制三角形，从第0个点开始绘制。绘制需要使用到6个点。
+      // 绘制三角形，从第0个点开始绘制。绘制需要使用到3个点。
       let primitiveType = this.gl.TRIANGLES;
       let offset2 = 0;
       let count = 3;
@@ -95,7 +95,7 @@ export default {
       // 设置画布的显示尺寸和 画布的drawingbuffer尺寸相同
       resizeCanvasToDisplaySize(this.gl.canvas);
       // 告诉WebGL如何将裁剪空间（-1 到 +1）中的点转换到像素空间， 也就是画布内
-      this.gl.viewport(0, 0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight);
+      this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
       // 设置清除画布的背景色
       this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
       // 开启深度检测

@@ -12,8 +12,9 @@ void main() {
     vec2 zeroToTwo = zeroToOne * 2.0;
     // 把 0->2 转换到 -1->+1 (裁剪空间)
     vec2 clipSpace = zeroToTwo - 1.0;
+    // WebGL认为左下角是 0，0 。
+    //想要像传统二维API那样起点在左上角，我们只需翻转y轴即可
+    clipSpace = clipSpace * vec2(1, -1);
 
     gl_Position = vec4(clipSpace,0.0,1.0);
-
-
 }

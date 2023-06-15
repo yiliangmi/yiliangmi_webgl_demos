@@ -49,6 +49,14 @@ const routes = [
             },
             component: () => import('@/views/demo001/index.vue')
         },
+        {
+            path: '/demo002',
+            name: 'demo002利用屏幕像素坐标(左上角为坐标原点)绘制简单的三角形',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo002/index.vue')
+        },
     ]
   }
 ]
