@@ -57,6 +57,14 @@ const routes = [
             },
             component: () => import('@/views/demo002/index.vue')
         },
+        {
+            path: '/demo003',
+            name: 'demo003利用屏幕像素坐标(左上角为坐标原点)随机绘制30个三角形',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo003/index.vue')
+        },
     ]
   }
 ]

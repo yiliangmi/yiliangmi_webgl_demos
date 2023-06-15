@@ -1,6 +1,6 @@
 <template>
   <div class="home-wrap">
-    <div class="home_header">利用屏幕像素坐标(左上角为坐标原点)绘制简单的三角形</div>
+    <div class="home_header">利用屏幕像素坐标(左上角为坐标原点)随机绘制30个三角形</div>
     <div class="home-content">
       <canvas ref="myCanvas" id="myCanvas" class="myCanvas">
       </canvas>
@@ -36,7 +36,10 @@ export default {
       let isGlExist = await this.getGl();
       if (isGlExist) {
         await this.loadShader();
-        await this.setupBuffers();
+        //设置视口和画布
+        await this.setupViewPort();
+        // 设置分辨率变量
+        await this.setupUResolution();
         await this.draws();
       }
     },
@@ -44,12 +47,30 @@ export default {
      * 绘制
      */
     async draws() {
-      //设置视口和画布
-      await this.setupViewPort();
-      // 设置变量
-      await this.setupVariables();
-      // 绘制三角形
-      await this.drawTriangle();
+      for (let i = 0; i <30; i++) {
+        // 设置片元着色器颜色变量
+        await this.setUColor();
+        // 设置三角形缓冲数据（屏幕像素坐标）
+        await this.setTriangleBuffers(this.randomInt(300),this.randomInt(300),this.randomInt(100),this.randomInt(200));
+        // 绘制三角形
+        await this.drawTriangle();
+      }
+    },
+    /**
+     * 获取小于range的随机整数
+     * @param range
+     * @returns {number}
+     */
+    randomInt(range) {
+      return Math.floor(Math.random() * range);
+    },
+    /**
+     * 获取片元着色器颜色变量位置
+     */
+    setUColor() {
+      // 获取片元着色器颜色变量位置
+      let uColorLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_color');
+      this.gl.uniform4f(uColorLocation, Math.random(), Math.random(), Math.random(), 1.0);
     },
     /**
      * 绘制三角形
@@ -68,14 +89,6 @@ export default {
       this.gl.vertexAttribPointer(vertexPositionIndex, 2, this.gl.FLOAT, false, 0, 0);
       // 绘制三角形，从第0个点开始绘制。绘制需要使用到3个点。
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
-    },
-    /**
-     * 设置变量
-     * @returns {Promise<void>}
-     */
-    async setupVariables() {
-      // 设置分辨率变量
-      await this.setupUResolution();
     },
     /**
      * 设置分辨率变量
@@ -103,20 +116,20 @@ export default {
       // 清除画布
       this.gl.clear(this.gl.COLOR_BUFFER_BIT || this.gl.DEPTH_BUFFER_BIT);
     },
-    async setupBuffers() {
-      // 三角形缓冲数据
-      await this.setTriangleBuffers();
-    },
     /**
      * 设置三角形缓冲数据（屏幕像素坐标）
      * @returns {Promise<void>}
      */
-    async setTriangleBuffers() {
+    async setTriangleBuffers(x,y,width,height) {
+      var x1 = x;
+      var x2 = x + width;
+      var y1 = y;
+      var y2 = y + height;
       // 三角形顶点
       let triangleVertex = [
-        20, 20,
-        180, 20,
-        20, 280
+        x1, y1,
+        x2, y1,
+        x1, y2
       ]
       // 创建三角形顶点缓冲区
       this.triangleVertexBuffer = this.gl.createBuffer();
