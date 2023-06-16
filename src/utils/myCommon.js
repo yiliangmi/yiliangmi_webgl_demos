@@ -59,7 +59,7 @@ export function compileShader(gl, shaderSource, shaderType) {
  */
 export function createProgram(gl, vertexShader, fragmentShader) {
     // 创建一个程序
-    var program = gl.createProgram();
+    let program = gl.createProgram();
 
     // 附上着色器
     gl.attachShader(program, vertexShader);
@@ -69,7 +69,7 @@ export function createProgram(gl, vertexShader, fragmentShader) {
     gl.linkProgram(program);
 
     // 检查链接是否成功
-    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    let success = gl.getProgramParameter(program, gl.LINK_STATUS);
     if (!success) {
         // 链接过程出现问题
         throw ("program failed to link:" + gl.getProgramInfoLog (program));
