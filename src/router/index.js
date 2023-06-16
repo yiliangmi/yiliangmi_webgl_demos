@@ -73,6 +73,14 @@ const routes = [
             },
             component: () => import('@/views/demo004/index.vue')
         },
+        {
+            path: '/demo005',
+            name: 'demo005二维矩阵之绕自定义中心点旋转的F字母',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo005/index.vue')
+        },
     ]
   }
 ]
