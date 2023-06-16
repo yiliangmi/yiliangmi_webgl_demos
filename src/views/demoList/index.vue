@@ -25,7 +25,6 @@ export default {
     //过滤
     getBreadCrumbList() {
       this.breadList = this.$router.options.routes[0].children.filter((item, index) => {
-        console.log(item)
         return item.meta && item.meta.isDemo
       })
     },

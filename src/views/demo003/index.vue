@@ -67,7 +67,7 @@ export default {
     /**
      * 获取片元着色器颜色变量位置
      */
-    setUColor() {
+    async setUColor() {
       // 获取片元着色器颜色变量位置
       let uColorLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_color');
       this.gl.uniform4f(uColorLocation, Math.random(), Math.random(), Math.random(), 1.0);
@@ -111,8 +111,7 @@ export default {
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
       // 设置清除画布的背景色
       this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      // 开启深度检测
-      this.gl.enable(this.gl.DEPTH_TEST);
+
       // 清除画布
       this.gl.clear(this.gl.COLOR_BUFFER_BIT || this.gl.DEPTH_BUFFER_BIT);
     },

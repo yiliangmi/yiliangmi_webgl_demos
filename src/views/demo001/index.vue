@@ -98,8 +98,6 @@ export default {
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
       // 设置清除画布的背景色
       this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      // 开启深度检测
-      this.gl.enable(this.gl.DEPTH_TEST);
       // 清除画布
       this.gl.clear(this.gl.COLOR_BUFFER_BIT || this.gl.DEPTH_BUFFER_BIT);
     },
