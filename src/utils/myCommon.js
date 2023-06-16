@@ -76,4 +76,4 @@ export function createProgram(gl, vertexShader, fragmentShader) {
     }
 
     return program;
-};
+}
