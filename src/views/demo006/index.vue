@@ -4,9 +4,9 @@
     <div>
       <h4>tips</h4>
       <ul>
-        <li>我们总是绕原点旋转，而 'F' 的原点就是左上角，也就是 (0, 0)</li>
-        <li>使用二维矩阵m3.projection()简化从像素坐标(左上角为坐标原点)到裁剪坐标（坐标范围是 -1 到 +1）的转换</li>
-        <li>矩阵顺序：projectionMat * translationMat * rotationMat * scaleMat * position</li>
+        <li>渲染纹理时需要纹理坐标，而不是像素坐标</li>
+        <li>无论纹理是什么尺寸，纹理坐标范围始终是 0.0 到 1.0(很重要)</li>
+        <li>为什么u_image没有设置还能正常运行？全局变量默认为 0 所以 u_image 默认使用纹理单元 0 。 纹理单元 0 默认为当前活跃纹理，所以调用 bindTexture 会将纹理绑定到单元 0</li>
       </ul>
     </div>
     <div class="home-content">
@@ -24,13 +24,14 @@ import {mat3, glMatrix} from "gl-matrix";
 
 export default {
   name: "index",
-  components: {ToolBar},
   data() {
     return{
       canvas: null, //canvas对象
       gl: null,  //webgl上下文,
       shaderProgram: null,  //着色器程序
-      fVertexBuffer: null,  //字母f顶点坐标缓冲区
+      polygonVertexBuffer: null,  //多边形顶点坐标缓冲区
+      texCoordBuffer: null,  //纹理坐标缓冲区
+      polygonTexture: null,  //纹理
       uMatrix: mat3.create()  //生成 mat3 单位矩阵
     }
   },
@@ -46,8 +47,6 @@ export default {
       let isGlExist = await this.getGl();
       if (isGlExist) {
         await this.loadShader();
-        //设置片元着色器颜色变量
-        await this.setUColor();
         // 绘制场景
         await this.drawScene();
       }
@@ -57,36 +56,99 @@ export default {
      * @returns {Promise<void>}
      */
     async drawScene() {
-      //设置视口和画布
-      await this.setupViewPort();
+
       // 设置顶点的二维变换矩阵
       await this.setUMatrix();
-      //设置字母F的缓冲数据（屏幕像素坐标）
-      await this.setFBuffers();
-      // 绘制字母F
-      await this.drawF();
+      //设置多边形的缓冲数据（屏幕像素坐标）
+      await this.setPolygonBuffers();
+      // 设置纹理坐标的缓冲数据
+      await this.setTexCoordBuffers();
+      // 设置纹理
+      // 图片是异步加载的，所以我们需要等待纹理加载，一旦加载完成就开始绘制
+      await this.setupTextures();
+      //设置视口和画布
+      await this.setupViewPort();
+      // 绘制多边形
+      await this.drawPolygon();
+
     },
     /**
-     * 绘制字母F
+     * 设置纹理
+     */
+    async setupTextures() {
+      return new Promise(((resolve, reject) => {
+        this.polygonTexture = this.gl.createTexture();
+        let image = new Image();
+        image.src = require('./textures/test.png')
+        image.onload = async () => {
+          await this.handleTextureLoaded(image, this.polygonTexture);
+          resolve(true);
+        }
+      }))
+
+    },
+    /**
+     * 图片加载后上传至纹理
+     * @param image
+     * @param texture
      * @returns {Promise<void>}
      */
-    async drawF() {
+    async handleTextureLoaded(image, texture) {
+      //通过把新创建的纹理对象绑定到 gl.TEXTURE_2D 来让它成为当前操作纹理
+      this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+
+      // 设置参数，让我们可以绘制任何尺寸的图像
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+
+      // 将图像上传到纹理
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+
+    },
+    /**
+     * 绘制多边形
+     * @returns {Promise<void>}
+     */
+    async drawPolygon() {
+
+
+      /*-----------顶点坐标------------*/
+
       // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.fVertexBuffer);
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.polygonVertexBuffer);
 
       // 获取顶点位置的索引
-      let fLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_position');
+      let polygonLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_position');
 
       // 激活每一个属性以便使用，不被激活的属性是不会被使用的。
       // 一旦激活，以下其他方法就可以获取到属性的值了，包括vertexAttribPointer()，vertexAttrib*()，和 getVertexAttrib() (en-US)
-      this.gl.enableVertexAttribArray(fLocation);
+      this.gl.enableVertexAttribArray(polygonLocation);
 
       //告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据
       // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
-      this.gl.vertexAttribPointer(fLocation, 2, this.gl.FLOAT, false, 0, 0);
+      this.gl.vertexAttribPointer(polygonLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-      //  'F'有6个三角形，每个三角形需要3个点，共18个点
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, 18);
+
+      /*-----------纹理坐标------------*/
+
+      // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+
+      // 获取顶点位置的索引
+      let texLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_texCoord');
+      // 激活每一个属性以便使用，不被激活的属性是不会被使用的。
+      // 一旦激活，以下其他方法就可以获取到属性的值了，包括vertexAttribPointer()，vertexAttrib*()，和 getVertexAttrib() (en-US)
+      this.gl.enableVertexAttribArray(texLocation);
+      //告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据
+      // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
+      this.gl.vertexAttribPointer(texLocation,2,this.gl.FLOAT, false, 0, 0);
+
+
+      //  多边形有2个三角形，每个三角形需要3个点，共6个点
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     },
     /**
      * 设置顶点的二维变换矩阵
@@ -98,65 +160,56 @@ export default {
       // 按照投影矩阵*平移矩阵*旋转矩阵*缩放矩阵*顶点坐标进行空间变换
       // 1.把屏幕像素坐标（左上角为坐标原点）转换为裁剪坐标（坐标范围是 -1 到 +1）
       this.uMatrix = mat3.projection(this.uMatrix, this.gl.canvas.clientWidth, this.gl.canvas.clientHeight);
-      // 2.设置平移矩阵
-      this.uMatrix = mat3.translate(this.uMatrix, this.uMatrix, [this.sliderBar.xVal, this.sliderBar.yVal]);
-      // 3.设置旋转矩阵
-      this.uMatrix = mat3.rotate(this.uMatrix, this.uMatrix, glMatrix.toRadian(this.sliderBar.angleVal));
-      // 4.设置缩放矩阵
-      this.uMatrix = mat3.scale(this.uMatrix, this.uMatrix, [this.sliderBar.scaleXVal, this.sliderBar.scaleYVal]);
-
       // 获取uMatrix在着色器程序中的位置
       let uMatrixLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_matrix');
       // 设置uMatrix的值
       this.gl.uniformMatrix3fv(uMatrixLocation, false, this.uMatrix);
     },
     /**
-     * 设置字母F的缓冲数据（屏幕像素坐标）
-     * @returns {Promise<void>}
+     * 设置纹理坐标的缓冲数据
      */
-    async setFBuffers() {
+    async setTexCoordBuffers() {
 
-      // 字母F的顶点
-      let fVertex = [
-        // 左侧列
-        0, 0,
-        30, 0,
-        0, 150,
-        0, 150,
-        30, 0,
-        30, 150,
+      let textCoord = [
+        0.0,  0.0,
+        1.0,  0.0,
+        0.0,  1.0,
 
-        // 上横杠
-        30, 0,
-        100, 0,
-        30, 30,
-        30, 30,
-        100, 0,
-        100, 30,
-
-        // 中横杠
-        30, 60,
-        67, 60,
-        30, 90,
-        30, 90,
-        67, 60,
-        67, 90,
+        0.0,  1.0,
+        1.0,  0.0,
+        1.0,  1.0
       ]
 
-      // 创建字母F的缓冲区
-      this.fVertexBuffer = this.gl.createBuffer();
+      // 创建纹理坐标的缓冲区
+      this.texCoordBuffer = this.gl.createBuffer();
       // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.fVertexBuffer);
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
       // 把顶点数据发送到绑定的缓冲区
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(fVertex), this.gl.STATIC_DRAW);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textCoord), this.gl.STATIC_DRAW);
     },
     /**
-     * 获取片元着色器颜色变量位置
+     * 设置多边形的缓冲数据（屏幕像素坐标）
+     * @returns {Promise<void>}
      */
-    async setUColor() {
-      // 获取片元着色器颜色变量位置
-      let uColorLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_color');
-      this.gl.uniform4f(uColorLocation, Math.random(), Math.random(), Math.random(), 1.0);
+    async setPolygonBuffers() {
+
+      // 多边形的顶点（两个三角形的顶点构成）
+      let polygonVertex = [
+        0.0, 0.0,
+        200.0, 0.0,
+        0.0, 200.0,
+
+        0.0, 200.0,
+        200.0, 0.0,
+        200.0, 200.0
+      ]
+
+      // 创建多边形的缓冲区
+      this.polygonVertexBuffer = this.gl.createBuffer();
+      // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.polygonVertexBuffer);
+      // 把顶点数据发送到绑定的缓冲区
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(polygonVertex), this.gl.STATIC_DRAW);
     },
     /**
      * 设置视口和画布
@@ -165,8 +218,6 @@ export default {
     setupViewPort() {
       // 设置画布的显示尺寸和 画布的drawingbuffer尺寸相同
       resizeCanvasToDisplaySize(this.gl.canvas);
-      this.xMax = this.gl.canvas.width;
-      this.yMax = this.gl.canvas.height;
       // 告诉WebGL如何将裁剪空间（-1 到 +1）中的点转换到像素空间， 也就是画布内
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
       // 设置清除画布的背景色

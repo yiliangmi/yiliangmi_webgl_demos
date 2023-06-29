@@ -81,6 +81,14 @@ const routes = [
             },
             component: () => import('@/views/demo005/index.vue')
         },
+        {
+            path: '/demo006',
+            name: 'demo006简单的纹理',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo006/index.vue')
+        },
     ]
   }
 ]
