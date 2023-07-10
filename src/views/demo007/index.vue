@@ -1,6 +1,6 @@
 <template>
   <div class="home-wrap">
-    <div class="home_header">简单的纹理</div>
+    <div class="home_header">平面绘制透视纹理校正</div>
     <div>
       <h4>tips</h4>
       <ul>
@@ -30,9 +30,23 @@ export default {
       gl: null,  //webgl上下文,
       shaderProgram: null,  //着色器程序
       polygonVertexBuffer: null,  //多边形顶点坐标缓冲区
-      texCoordBuffer: null,  //纹理坐标缓冲区
       polygonTexture: null,  //纹理
-      uMatrix: mat3.create()  //生成 mat3 单位矩阵
+      uMatrix: mat3.create(),  //生成 mat3 单位矩阵
+      /*
+        *
+        *
+        *   v0-------v2
+        *   |         |
+        *   |         |
+        *   |         |
+        *   v1-------v3
+        *
+        *   [v0.x,v0.y,v1.x,v1.y,v2.x,v2.y,v3.x,v3.y]
+      */
+      v0: {x: 100.0,y: 0.0},
+      v1: {x: 0.0, y: 200.0 },
+      v2: {x: 200.0,y: 0.0},
+      v3: {x: 600.0,y: 200.0},
     }
   },
   mounted() {
@@ -61,8 +75,6 @@ export default {
       await this.setUMatrix();
       //设置多边形的缓冲数据（屏幕像素坐标）
       await this.setPolygonBuffers();
-      // 设置纹理坐标的缓冲数据
-      await this.setTexCoordBuffers();
       // 设置纹理
       // 图片是异步加载的，所以我们需要等待纹理加载，一旦加载完成就开始绘制
       await this.setupTextures();
@@ -97,6 +109,9 @@ export default {
       //通过把新创建的纹理对象绑定到 gl.TEXTURE_2D 来让它成为当前操作纹理
       this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
+      //对纹理图像进行y轴反转
+      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL,1);
+
       // 设置参数，让我们可以绘制任何尺寸的图像
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
@@ -130,24 +145,8 @@ export default {
       // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
       this.gl.vertexAttribPointer(polygonLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-
-      /*-----------纹理坐标------------*/
-
-      // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
-
-      // 获取顶点位置的索引
-      let texLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_texCoord');
-      // 激活每一个属性以便使用，不被激活的属性是不会被使用的。
-      // 一旦激活，以下其他方法就可以获取到属性的值了，包括vertexAttribPointer()，vertexAttrib*()，和 getVertexAttrib() (en-US)
-      this.gl.enableVertexAttribArray(texLocation);
-      //告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据
-      // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
-      this.gl.vertexAttribPointer(texLocation,2,this.gl.FLOAT, false, 0, 0);
-
-
       //  多边形有2个三角形，每个三角形需要3个点，共6个点
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.polygonVertexBuffer);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     },
     /**
@@ -166,28 +165,6 @@ export default {
       this.gl.uniformMatrix3fv(uMatrixLocation, false, this.uMatrix);
     },
     /**
-     * 设置纹理坐标的缓冲数据
-     */
-    async setTexCoordBuffers() {
-
-      let textCoord = [
-        0.0,  0.0,
-        1.0,  0.0,
-        0.0,  1.0,
-
-        0.0,  1.0,
-        1.0,  0.0,
-        1.0,  1.0
-      ]
-
-      // 创建纹理坐标的缓冲区
-      this.texCoordBuffer = this.gl.createBuffer();
-      // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
-      // 把顶点数据发送到绑定的缓冲区
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textCoord), this.gl.STATIC_DRAW);
-    },
-    /**
      * 设置多边形的缓冲数据（屏幕像素坐标）
      * @returns {Promise<void>}
      */
@@ -195,7 +172,7 @@ export default {
 
       // 多边形的顶点（两个三角形的顶点构成）
       // 未变形的顶点
-      let polygonVertex = [
+/*      let polygonVertex = [
         0.0, 0.0,
         200.0, 0.0,
         0.0, 200.0,
@@ -203,7 +180,40 @@ export default {
         0.0, 200.0,
         200.0, 0.0,
         200.0, 200.0
+      ]*/
+      // 变形的顶点1
+/*      let polygonVertex = [
+        100.0, 0.0,
+        300.0, 0.0,
+        0.0, 200.0,
+
+        0.0, 200.0,
+        300.0, 0.0,
+        200.0, 200.0
+      ]*/
+      // 变形的顶点2
+      let polygonVertex = [
+        this.v0.x, this.v0.y,
+        this.v1.x, this.v1.y,
+        this.v2.x, this.v2.y,
+
+        this.v1.x, this.v1.y,
+        this.v2.x, this.v2.y,
+        this.v3.x, this.v3.y,
       ]
+
+      //将四个顶点位置传入
+      let point0 = this.gl.getUniformLocation(this.shaderProgram, "u_point0");
+      let point1 = this.gl.getUniformLocation(this.shaderProgram, "u_point1");
+      let point2 = this.gl.getUniformLocation(this.shaderProgram, "u_point2");
+      let point3 = this.gl.getUniformLocation(this.shaderProgram, "u_point3");
+      if(point0 < 0){
+        alert("无法获取到存储的位置");
+      }
+      this.gl.uniform2f(point0,this.v0.x,this.v0.y);
+      this.gl.uniform2f(point1,this.v1.x,this.v1.y);
+      this.gl.uniform2f(point2,this.v2.x,this.v2.y);
+      this.gl.uniform2f(point3,this.v3.x,this.v3.y);
 
       // 创建多边形的缓冲区
       this.polygonVertexBuffer = this.gl.createBuffer();
