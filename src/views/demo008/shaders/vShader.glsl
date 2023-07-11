@@ -4,11 +4,7 @@ attribute vec2 a_position;
 // 顶点变换矩阵(二维)
 uniform mat3 u_matrix;
 
-// 纹理坐标（用来传递给片元着色器）
-attribute vec2 a_texCoord;
-
-// 'varying'变量将纹理坐标从顶点着色器传到片段着色器
-varying vec2 v_texCoord;
+varying vec2 v_position;
 
 void main() {
     // 顶点乘以变换矩阵，得到变换后的顶点坐标
@@ -16,5 +12,5 @@ void main() {
 
     // 将纹理坐标传给片段着色器
     // GPU会在点之间进行插值
-    v_texCoord = a_texCoord;
+    v_position = a_position;
 }

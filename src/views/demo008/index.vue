@@ -1,13 +1,12 @@
 <template>
   <div class="home-wrap">
-    <div class="home_header">简单的纹理</div>
+    <div class="home_header">平面绘制透视视频纹理校正</div>
     <div>
       <h4>tips</h4>
       <ul>
         <li>渲染纹理时需要纹理坐标，而不是像素坐标</li>
         <li>无论纹理是什么尺寸，纹理坐标范围始终是 0.0 到 1.0(很重要)</li>
         <li>为什么u_image没有设置还能正常运行？全局变量默认为 0 所以 u_image 默认使用纹理单元 0 。 纹理单元 0 默认为当前活跃纹理，所以调用 bindTexture 会将纹理绑定到单元 0</li>
-        <li>m3.projection()矩阵已经把屏幕像素坐标（左上角为坐标原点，和图像坐标系一致）转换为裁剪坐标（坐标范围是 -1 到 +1）（和纹理坐标一致），因此，不需要对纹理坐标再做绕Y轴翻转</li>
       </ul>
     </div>
     <div class="home-content">
@@ -22,6 +21,7 @@ import fShaderSource from './shaders/fShader.glsl';
 import vShaderSource from './shaders/vShader.glsl';
 import {resizeCanvasToDisplaySize} from "@/utils/myCommon";
 import {mat3, glMatrix} from "gl-matrix";
+import mp4Source from './textures/test.mp4'
 
 export default {
   name: "index",
@@ -31,9 +31,25 @@ export default {
       gl: null,  //webgl上下文,
       shaderProgram: null,  //着色器程序
       polygonVertexBuffer: null,  //多边形顶点坐标缓冲区
-      texCoordBuffer: null,  //纹理坐标缓冲区
       polygonTexture: null,  //纹理
-      uMatrix: mat3.create()  //生成 mat3 单位矩阵
+      uMatrix: mat3.create(),  //生成 mat3 单位矩阵
+      /*
+        *
+        *
+        *   v0-------v2
+        *   |         |
+        *   |         |
+        *   |         |
+        *   v1-------v3
+        *
+        *   [v0.x,v0.y,v1.x,v1.y,v2.x,v2.y,v3.x,v3.y]
+      */
+      v0: {x: 100.0,y: 0.0},
+      v1: {x: 0.0, y: 200.0 },
+      v2: {x: 200.0,y: 0.0},
+      v3: {x: 600.0,y: 200.0},
+      isVideoReady: false,
+      video: null
     }
   },
   mounted() {
@@ -48,8 +64,13 @@ export default {
       let isGlExist = await this.getGl();
       if (isGlExist) {
         await this.loadShader();
+        // 设置纹理
+        // 图片是异步加载的，所以我们需要等待纹理加载，一旦加载完成就开始绘制
+        await this.setupTextures();
         // 绘制场景
         await this.drawScene();
+
+
       }
     },
     /**
@@ -62,31 +83,66 @@ export default {
       await this.setUMatrix();
       //设置多边形的缓冲数据（屏幕像素坐标）
       await this.setPolygonBuffers();
-      // 设置纹理坐标的缓冲数据
-      await this.setTexCoordBuffers();
-      // 设置纹理
-      // 图片是异步加载的，所以我们需要等待纹理加载，一旦加载完成就开始绘制
-      await this.setupTextures();
+
       //设置视口和画布
       await this.setupViewPort();
       // 绘制多边形
       await this.drawPolygon();
 
+      window.requestAnimationFrame(this.drawScene);
     },
     /**
      * 设置纹理
      */
     async setupTextures() {
-      return new Promise(((resolve, reject) => {
         this.polygonTexture = this.gl.createTexture();
-        let image = new Image();
-        image.src = require('./textures/test.png')
-        image.onload = async () => {
-          await this.handleTextureLoaded(image, this.polygonTexture);
-          resolve(true);
-        }
-      }))
+        let video = this.setupVideo();
+        await this.handleTextureLoaded(video, this.polygonTexture);
+    },
+    /**
+     * 首先，我们创建一个视频元素。
+     *     我们将其设置为自动播放，静音和循环播放视频。
+     *     然后，我们设置了两个事件以确保视频正在播放并且时间轴已更新。
+     *     我们需要进行这两项检查，因为如果将视频上传到WebGL尚无可用数据，它将产生错误。
+     *     检查这两个事件可确保有可用数据，并且可以安全地开始将视频上传到WebGL纹理
+     * @returns {Promise<void>}
+     */
+    async setupVideo() {
+      let self = this;
+        let video = document.createElement('video');
 
+        let playing = false;
+        let timeupdate = false;
+
+        video.autoplay = true;
+        video.muted = true;
+        video.loop = true;
+
+        // Waiting for these 2 events ensures
+        // there is data in the video
+
+        let myPlay = function() {
+          playing = true;
+          checkReady();
+        };
+      video.addEventListener('playing', myPlay);
+
+      let myTime = function() {
+        timeupdate = true;
+        checkReady();
+      };
+      video.addEventListener('timeupdate', myTime);
+
+      video.src = mp4Source;
+      await video.play();
+
+      function checkReady() {
+        if (playing && timeupdate) {
+          console.log('aaa')
+          self.isVideoReady = true;
+          self.video = video;
+        }
+      }
     },
     /**
      * 图片加载后上传至纹理
@@ -94,18 +150,23 @@ export default {
      * @param texture
      * @returns {Promise<void>}
      */
-    async handleTextureLoaded(image, texture) {
+    async handleTextureLoaded(video, texture) {
       //通过把新创建的纹理对象绑定到 gl.TEXTURE_2D 来让它成为当前操作纹理
       this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+
+      //对纹理图像进行y轴反转
+      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL,1);
+
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
+
 
       // 设置参数，让我们可以绘制任何尺寸的图像
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
 
       // 将图像上传到纹理
-      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
 
     },
     /**
@@ -131,24 +192,14 @@ export default {
       // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
       this.gl.vertexAttribPointer(polygonLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-
-      /*-----------纹理坐标------------*/
-
-      // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
-
-      // 获取顶点位置的索引
-      let texLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_texCoord');
-      // 激活每一个属性以便使用，不被激活的属性是不会被使用的。
-      // 一旦激活，以下其他方法就可以获取到属性的值了，包括vertexAttribPointer()，vertexAttrib*()，和 getVertexAttrib() (en-US)
-      this.gl.enableVertexAttribArray(texLocation);
-      //告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据
-      // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
-      this.gl.vertexAttribPointer(texLocation,2,this.gl.FLOAT, false, 0, 0);
-
+      this.gl.bindTexture(this.gl.TEXTURE_2D,this.polygonTexture);
+      if (this.isVideoReady) {
+        console.log('a')
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.video);
+      }
 
       //  多边形有2个三角形，每个三角形需要3个点，共6个点
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.polygonVertexBuffer);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     },
     /**
@@ -165,28 +216,6 @@ export default {
       let uMatrixLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_matrix');
       // 设置uMatrix的值
       this.gl.uniformMatrix3fv(uMatrixLocation, false, this.uMatrix);
-    },
-    /**
-     * 设置纹理坐标的缓冲数据
-     */
-    async setTexCoordBuffers() {
-
-      let textCoord = [
-        0.0,  0.0,
-        1.0,  0.0,
-        0.0,  1.0,
-
-        0.0,  1.0,
-        1.0,  0.0,
-        1.0,  1.0
-      ]
-
-      // 创建纹理坐标的缓冲区
-      this.texCoordBuffer = this.gl.createBuffer();
-      // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
-      // 把顶点数据发送到绑定的缓冲区
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textCoord), this.gl.STATIC_DRAW);
     },
     /**
      * 设置多边形的缓冲数据（屏幕像素坐标）
@@ -217,14 +246,27 @@ export default {
       ]*/
       // 变形的顶点2
       let polygonVertex = [
-        100.0, 0.0,
-        200.0, 0.0,
-        0.0, 200.0,
+        this.v0.x, this.v0.y,
+        this.v1.x, this.v1.y,
+        this.v2.x, this.v2.y,
 
-        0.0, 200.0,
-        200.0, 0.0,
-        300.0, 200.0
+        this.v1.x, this.v1.y,
+        this.v2.x, this.v2.y,
+        this.v3.x, this.v3.y,
       ]
+
+      //将四个顶点位置传入
+      let point0 = this.gl.getUniformLocation(this.shaderProgram, "u_point0");
+      let point1 = this.gl.getUniformLocation(this.shaderProgram, "u_point1");
+      let point2 = this.gl.getUniformLocation(this.shaderProgram, "u_point2");
+      let point3 = this.gl.getUniformLocation(this.shaderProgram, "u_point3");
+      if(point0 < 0){
+        alert("无法获取到存储的位置");
+      }
+      this.gl.uniform2f(point0,this.v0.x,this.v0.y);
+      this.gl.uniform2f(point1,this.v1.x,this.v1.y);
+      this.gl.uniform2f(point2,this.v2.x,this.v2.y);
+      this.gl.uniform2f(point3,this.v3.x,this.v3.y);
 
       // 创建多边形的缓冲区
       this.polygonVertexBuffer = this.gl.createBuffer();

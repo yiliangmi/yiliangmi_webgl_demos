@@ -97,6 +97,14 @@ const routes = [
             },
             component: () => import('@/views/demo007/index.vue')
         },
+        {
+            path: '/demo008',
+            name: 'demo008平面绘制透视视频纹理校正',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo008/index.vue')
+        },
     ]
   }
 ]
