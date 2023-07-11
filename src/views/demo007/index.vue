@@ -110,7 +110,7 @@ export default {
       this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
       //对纹理图像进行y轴反转
-      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL,1);
+      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL,true);
 
       // 设置参数，让我们可以绘制任何尺寸的图像
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);

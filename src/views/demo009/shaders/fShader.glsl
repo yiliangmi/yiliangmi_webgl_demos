@@ -12,7 +12,7 @@ uniform float u_kernelWeight;
 
 
 void main() {
-
+    // 每个像素对应的距离
     vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
     vec4 colorSum =
     texture2D(u_image, v_texCoord + onePixel * vec2(-1, -1)) * u_kernel[0] +

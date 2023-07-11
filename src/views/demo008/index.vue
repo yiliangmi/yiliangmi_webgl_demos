@@ -155,7 +155,7 @@ export default {
       this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
       //对纹理图像进行y轴反转
-      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL,1);
+      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL,true);
 
       this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
 
