@@ -105,6 +105,14 @@ const routes = [
             },
             component: () => import('@/views/demo008/index.vue')
         },
+        {
+            path: '/demo009',
+            name: 'demo009使用卷积核处理图像纹理',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo009/index.vue')
+        },
     ]
   }
 ]
