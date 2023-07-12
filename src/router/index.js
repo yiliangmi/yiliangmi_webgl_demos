@@ -113,6 +113,14 @@ const routes = [
             },
             component: () => import('@/views/demo009/index.vue')
         },
+        {
+            path: '/demo010',
+            name: 'demo010图像纹理同时施加多种效果(帧缓冲)',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo010/index.vue')
+        },
     ]
   }
 ]
