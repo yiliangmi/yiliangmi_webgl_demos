@@ -121,6 +121,14 @@ const routes = [
             },
             component: () => import('@/views/demo010/index.vue')
         },
+        {
+            path: '/demo011',
+            name: 'demo010使用多个纹理',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo011/index.vue')
+        },
     ]
   }
 ]
