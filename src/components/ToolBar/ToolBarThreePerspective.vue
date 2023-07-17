@@ -1,18 +1,33 @@
 <template>
   <div class="operation-wrap">
     <el-row :gutter="20" class="operation-item">
+      <el-col :span="4"><div class="demonstration">垂直视角</div></el-col>
+      <el-col :span="16"><el-slider v-model="form.fieldOfView" :min="1" :max="179" @input="handleInput"></el-slider></el-col>
+      <el-col :span="4"><div class="demonstration">{{form.fieldOfView}}</div></el-col>
+    </el-row>
+    <el-row :gutter="20" class="operation-item">
+      <el-col :span="4"><div class="demonstration">近截面</div></el-col>
+      <el-col :span="16"><el-slider v-model="form.near" :min="1" :max="2000" @input="handleInput"></el-slider></el-col>
+      <el-col :span="4"><div class="demonstration">{{form.near}}</div></el-col>
+    </el-row>
+    <el-row :gutter="20" class="operation-item">
+      <el-col :span="4"><div class="demonstration">远截面</div></el-col>
+      <el-col :span="16"><el-slider v-model="form.far" :min="1" :max="2000" @input="handleInput"></el-slider></el-col>
+      <el-col :span="4"><div class="demonstration">{{form.far}}</div></el-col>
+    </el-row>
+    <el-row :gutter="20" class="operation-item">
       <el-col :span="4"><div class="demonstration">x轴平移</div></el-col>
-      <el-col :span="16"><el-slider v-model="form.xVal" :min="0" :max="xMax" @input="handleInput"></el-slider></el-col>
+      <el-col :span="16"><el-slider v-model="form.xVal" :min="-200" :max="xMax" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.xVal}}</div></el-col>
     </el-row>
     <el-row :gutter="20" class="operation-item">
       <el-col :span="4"><div class="demonstration">y轴平移</div></el-col>
-      <el-col :span="16"><el-slider v-model="form.yVal" :min="0" :max="yMax" @input="handleInput"></el-slider></el-col>
+      <el-col :span="16"><el-slider v-model="form.yVal" :min="-200" :max="yMax" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.yVal}}</div></el-col>
     </el-row>
     <el-row :gutter="20" class="operation-item">
       <el-col :span="4"><div class="demonstration">z轴平移</div></el-col>
-      <el-col :span="16"><el-slider v-model="form.zVal" :min="0" :max="zMax" @input="handleInput"></el-slider></el-col>
+      <el-col :span="16"><el-slider v-model="form.zVal" :min="-1000" :max="zMax" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.zVal}}</div></el-col>
     </el-row>
     <el-row :gutter="20" class="operation-item">
@@ -68,10 +83,13 @@ export default {
   data() {
     return {
       form:{
-        xVal: 0, // x轴平移
-        yVal: 0, // y轴平移
-        zVal: 0, // z轴平移
-        angleXVal: 0, // x轴旋转角度
+        fieldOfView: 30, // 垂直视角
+        near: 1, // 近截面
+        far: 2000, // 远截面
+        xVal: -29, // x轴平移
+        yVal: 79, // y轴平移
+        zVal: -986, // z轴平移
+        angleXVal: 221, // x轴旋转角度
         angleYVal: 0, // y轴旋转角度
         angleZVal: 0, // z轴旋转角度
         scaleXVal: 1, // x轴方向缩放

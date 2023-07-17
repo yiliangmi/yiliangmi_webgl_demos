@@ -137,6 +137,14 @@ const routes = [
             },
             component: () => import('@/views/demo012/index.vue')
         },
+        {
+            path: '/demo013',
+            name: 'demo013三维矩阵之透视投影下的F字母',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo013/index.vue')
+        },
     ]
   }
 ]
