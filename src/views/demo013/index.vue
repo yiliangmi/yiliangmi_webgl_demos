@@ -65,8 +65,7 @@ export default {
       let isGlExist = await this.getGl();
       if (isGlExist) {
         await this.loadShader();
-        //设置字母F的缓冲数据（屏幕像素坐标）
-        await this.setFBuffers();
+
         // 绘制场景
         await this.drawScene();
       }
@@ -90,7 +89,8 @@ export default {
       await this.setupViewPort();
       // 设置顶点的三维变换矩阵
       await this.setUMatrix();
-
+      //设置字母F的缓冲数据（屏幕像素坐标）
+      await this.setFBuffers();
       // 绘制字母F
       await this.drawF();
     },
@@ -153,8 +153,6 @@ export default {
       this.uMatrix = mat4.rotateZ(this.uMatrix, this.uMatrix, glMatrix.toRadian(this.sliderBar.angleZVal))
       // 4.设置缩放矩阵
       this.uMatrix = mat4.scale(this.uMatrix, this.uMatrix, [this.sliderBar.scaleXVal, this.sliderBar.scaleYVal, this.sliderBar.scaleZVal]);
-      // 5.创建一个矩阵，可以将原点移动到 'F' 的中心
-      //this.uMatrix = mat4.translate(this.uMatrix, this.uMatrix, [-50, -75]);
 
       // 获取uMatrix在着色器程序中的位置
       let uMatrixLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_matrix');
