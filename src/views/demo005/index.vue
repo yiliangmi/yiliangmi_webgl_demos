@@ -195,7 +195,7 @@ export default {
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
       // 设置清除画布的背景色
       this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      // 清除画布
+      // 清除画布和深度缓冲
       this.gl.clear(this.gl.COLOR_BUFFER_BIT || this.gl.DEPTH_BUFFER_BIT);
 
     },

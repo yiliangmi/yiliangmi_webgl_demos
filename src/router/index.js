@@ -123,11 +123,19 @@ const routes = [
         },
         {
             path: '/demo011',
-            name: 'demo010使用多个纹理',
+            name: 'demo011使用多个纹理',
             meta:{
                 isDemo: true
             },
             component: () => import('@/views/demo011/index.vue')
+        },
+        {
+            path: '/demo012',
+            name: 'demo012三维矩阵之正射投影下的F字母',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo012/index.vue')
         },
     ]
   }
