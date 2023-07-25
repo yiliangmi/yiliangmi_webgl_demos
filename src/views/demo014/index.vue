@@ -154,6 +154,8 @@ export default {
       //设置  mat4 为单位矩阵
       this.uMatrix = mat4.create();
       // 按照投影矩阵*平移矩阵*旋转矩阵*缩放矩阵*顶点坐标进行空间变换
+
+      /*-------------计算投影矩阵-------------*/
       // 1.设置透视投影矩阵
       let fovy = glMatrix.toRadian(60);
       let aspect = this.gl.canvas.clientWidth / this.gl.canvas.clientHeight;
@@ -161,6 +163,8 @@ export default {
       let far = 2000;
       let projectionMatrix = mat4.create();
       mat4.perspective(projectionMatrix, fovy, aspect, near, far);
+
+      /*-------------计算视图矩阵-------------*/
 
       // 2、计算相机矩阵
       let cameraMatrix = mat4.create();
