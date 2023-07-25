@@ -153,6 +153,14 @@ const routes = [
             },
             component: () => import('@/views/demo014/index.vue')
         },
+        {
+            path: '/demo015',
+            name: 'demo015三维矩阵之总是看向特定的F且相机又在绕一圈F旋转的相机',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo015/index.vue')
+        },
     ]
   }
 ]
