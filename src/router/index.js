@@ -145,6 +145,14 @@ const routes = [
             },
             component: () => import('@/views/demo013/index.vue')
         },
+        {
+            path: '/demo014',
+            name: 'demo014三维矩阵之一个绕F旋转的相机',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo014/index.vue')
+        },
     ]
   }
 ]
