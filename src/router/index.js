@@ -161,6 +161,14 @@ const routes = [
             },
             component: () => import('@/views/demo015/index.vue')
         },
+        {
+            path: '/demo016',
+            name: 'demo016三维矩阵之跟随转动的头部模型',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo016/index.vue')
+        },
     ]
   }
 ]
