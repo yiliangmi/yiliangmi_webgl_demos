@@ -169,6 +169,14 @@ const routes = [
             },
             component: () => import('@/views/demo016/index.vue')
         },
+        {
+            path: '/demo017',
+            name: 'demo017三维方向光源',
+            meta:{
+                isDemo: true
+            },
+            component: () => import('@/views/demo017/index.vue')
+        },
     ]
   }
 ]
