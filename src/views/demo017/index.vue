@@ -9,7 +9,7 @@
       </ul>
     </div>
     <div class="home-content">
-      <ToolBarThreePerspective :x-max="xMax" :y-max="yMax" :z-max="zMax" @updateScene="updateScene"></ToolBarThreePerspective>
+      <ToolBarThreeLight :x-max="xMax" :y-max="yMax" :z-max="zMax" @updateScene="updateScene"></ToolBarThreeLight>
       <canvas ref="myCanvas" id="myCanvas" class="myCanvas">
       </canvas>
     </div>
@@ -17,15 +17,15 @@
 </template>
 
 <script>
-import ToolBarThreePerspective from "@/components/ToolBar/ToolBarThreePerspective.vue";
+import ToolBarThreeLight from "@/components/ToolBar/ToolBarThreeLight.vue";
 import fShaderSource from './shaders/fShader.glsl';
 import vShaderSource from './shaders/vShader.glsl';
 import {resizeCanvasToDisplaySize} from "@/utils/myCommon";
-import {mat4, glMatrix, vec3} from "gl-matrix";
+import {mat4, glMatrix, vec3, mat3} from "gl-matrix";
 
 export default {
   name: "index",
-  components: {ToolBarThreePerspective},
+  components: {ToolBarThreeLight},
   data() {
     return{
       xMax: this.gl ? 200 : 100,
@@ -51,7 +51,9 @@ export default {
       fVertexBuffer: null,  //字母f顶点坐标缓冲区
       fColorBuffer: null,  //字母f顶点颜色缓冲区
       fNormalBuffer: null, //字母f顶点向量缓冲区
-      uMatrix: mat4.create()  //生成 mat4 单位矩阵
+      uMatrix: mat4.create(),  //生成 mat4 单位矩阵
+      worldViewProjectionMatrix: mat4.create(),  //生成 mat4 单位矩阵
+      worldMatrix: mat4.create(),  //生成 mat4 单位矩阵
     }
   },
   mounted() {
@@ -66,7 +68,8 @@ export default {
       let isGlExist = await this.getGl();
       if (isGlExist) {
         await this.loadShader();
-
+        // 设置光照参数
+        await this.setColors();
         // 绘制场景
         await this.drawScene();
       }
@@ -90,8 +93,7 @@ export default {
       await this.setupViewPort();
       // 设置顶点的三维变换矩阵
       await this.setUMatrix();
-      // 设置光照参数
-      await this.setColors();
+
       //设置字母F的缓冲数据（屏幕像素坐标）
       await this.setFBuffers();
       // 绘制字母F
@@ -113,7 +115,6 @@ export default {
       // 激活每一个属性以便使用，不被激活的属性是不会被使用的。
       // 一旦激活，以下其他方法就可以获取到属性的值了，包括vertexAttribPointer()，vertexAttrib*()，和 getVertexAttrib() (en-US)
       this.gl.enableVertexAttribArray(fLocation);
-
       //告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据
       // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
       this.gl.vertexAttribPointer(fLocation, 3, this.gl.FLOAT, false, 0, 0);
@@ -126,6 +127,7 @@ export default {
       // 激活每一个属性以便使用，不被激活的属性是不会被使用的。
       // 一旦激活，以下其他方法就可以获取到属性的值了，包括vertexAttribPointer()，vertexAttrib*()，和 getVertexAttrib()
       this.gl.enableVertexAttribArray(fColorLocation);
+      this.gl.vertexAttribPointer(fColorLocation, 3, this.gl.UNSIGNED_BYTE, true, 0, 0);
 
       /*-------------顶点法向量-------------*/
       // 告诉WebGL，从现在开始，这个缓冲对象就是它要使用的对象
@@ -135,10 +137,9 @@ export default {
       // 激活每一个属性以便使用，不被激活的属性是不会被使用的。
       // 一旦激活，以下其他方法就可以获取到属性的值了，包括vertexAttribPointer()，vertexAttrib*()，和 getVertexAttrib()
       this.gl.enableVertexAttribArray(fNormalLocation);
-
       //告诉显卡从当前绑定的缓冲区（bindBuffer()指定的缓冲区）中读取顶点数据
       // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
-      this.gl.vertexAttribPointer(fColorLocation, 3, this.gl.UNSIGNED_BYTE, true, 0, 0);
+      this.gl.vertexAttribPointer(fNormalLocation, 3, this.gl.FLOAT, false, 0, 0);
 
       //  'F'有6个三角形，每个三角形需要16个面，每个面六个顶点
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 16*6);
@@ -149,27 +150,54 @@ export default {
      */
     async setUMatrix() {
       //设置  mat4 为单位矩阵
-      this.uMatrix = mat4.identity(this.uMatrix);
+      //this.uMatrix = mat4.identity(this.uMatrix);
+      this.worldViewProjectionMatrix = mat4.identity(this.worldViewProjectionMatrix);
       // 按照投影矩阵*平移矩阵*旋转矩阵*缩放矩阵*顶点坐标进行空间变换
       // 1.设置透视投影
       let fovy = glMatrix.toRadian(this.sliderBar.fieldOfView);
       let aspect = this.gl.canvas.clientWidth / this.gl.canvas.clientHeight;
       let near = this.sliderBar.near;
       let far = this.sliderBar.far;
-      this.uMatrix = mat4.perspective(this.uMatrix, fovy, aspect, near, far);
-      // 2.设置平移矩阵
-      this.uMatrix = mat4.translate(this.uMatrix, this.uMatrix, [this.sliderBar.xVal, this.sliderBar.yVal, this.sliderBar.zVal]);
-      // 3.设置旋转矩阵
-      this.uMatrix = mat4.rotateX(this.uMatrix, this.uMatrix, glMatrix.toRadian(this.sliderBar.angleXVal))
-      this.uMatrix = mat4.rotateY(this.uMatrix, this.uMatrix, glMatrix.toRadian(this.sliderBar.angleYVal))
-      this.uMatrix = mat4.rotateZ(this.uMatrix, this.uMatrix, glMatrix.toRadian(this.sliderBar.angleZVal))
-      // 4.设置缩放矩阵
-      this.uMatrix = mat4.scale(this.uMatrix, this.uMatrix, [this.sliderBar.scaleXVal, this.sliderBar.scaleYVal, this.sliderBar.scaleZVal]);
+      let projectionMatrix = mat4.perspective(mat4.create(), fovy, aspect, near, far);
 
-      // 获取uMatrix在着色器程序中的位置
-      let uMatrixLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_matrix');
-      // 设置uMatrix的值
-      this.gl.uniformMatrix4fv(uMatrixLocation, false, this.uMatrix);
+
+      /*-------------计算视图矩阵-------------*/
+
+      // 2、计算视图
+      let cameraTarget = [0, 35, 0];
+      let cameraPosition = [800, 850, 800];
+      let up = [0, 1, 0];
+
+      // 计算相机的朝向矩阵,根据相机矩阵创建视图矩阵--都在lookAt方法中完成
+      this.worldMatrix = mat4.create();
+      mat4.lookAt(this.worldMatrix, cameraPosition, cameraTarget, up);
+
+     // 2.设置平移矩阵
+      //this.worldMatrix = mat4.translate(this.worldMatrix, this.worldMatrix, [this.sliderBar.xVal, this.sliderBar.yVal, this.sliderBar.zVal]);
+      // 3.设置旋转矩阵
+      //this.worldMatrix = mat4.rotateX(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleXVal))
+      this.worldMatrix = mat4.rotateY(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleYVal))
+      //this.worldMatrix = mat4.rotateZ(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleZVal))
+      // 4.设置缩放矩阵
+      //this.worldMatrix = mat4.scale(this.worldMatrix, this.worldMatrix, [this.sliderBar.scaleXVal, this.sliderBar.scaleYVal, this.sliderBar.scaleZVal]);
+
+      // 3、计算视图投影矩阵
+      this.worldViewProjectionMatrix = mat4.multiply(this.worldViewProjectionMatrix, projectionMatrix, this.worldMatrix);
+
+      // 计算光线法向量的转置矩阵
+      let worldInverseTransposeMatrix = mat3.create();
+      mat3.normalFromMat4(worldInverseTransposeMatrix, this.worldMatrix);
+
+      // 获取u_worldViewProjection在着色器程序中的位置
+      let uMatrixLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_worldViewProjection');
+      // 设置u_worldViewProjection的值
+      this.gl.uniformMatrix4fv(uMatrixLocation, false, this.worldViewProjectionMatrix);
+
+      // 获取u_worldInverseTranspose在着色器程序中的位置
+      let uWorldInverseTransposeLocation = this.gl.getUniformLocation(this.shaderProgram, 'u_worldInverseTranspose');
+      // 设置u_worldInverseTranspose的值
+      this.gl.uniformMatrix3fv(uWorldInverseTransposeLocation, false, worldInverseTransposeMatrix);
+
     },
     /**
      * 设置光照参数：光线方向等
@@ -179,7 +207,9 @@ export default {
       // 获取光线方向的索引
       let uReverseLightDirectionLocation  = this.gl.getUniformLocation(this.shaderProgram, 'u_reverseLightDirection');
       // 设置光线方向的值
-      this.gl.uniform3fv(uReverseLightDirectionLocation,vec3.normalize([0.5, 0.7, 1]))
+      let normalizeLightDirection = vec3.create();
+      normalizeLightDirection = vec3.normalize(normalizeLightDirection, [0.5, 0.7, 1]);
+      this.gl.uniform3fv(uReverseLightDirectionLocation, normalizeLightDirection);
     },
     /**
      * 设置字母F的缓冲数据（屏幕像素坐标）
@@ -613,7 +643,7 @@ export default {
       // 告诉WebGL如何将裁剪空间（-1 到 +1）中的点转换到像素空间， 也就是画布内
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
       // 设置清除画布的背景色
-      this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
       // 清除画布和深度缓冲
       this.gl.clear(this.gl.COLOR_BUFFER_BIT || this.gl.DEPTH_BUFFER_BIT);
       // 开启面剔除，开启这个特性后WebGL默认“剔除”背面三角形

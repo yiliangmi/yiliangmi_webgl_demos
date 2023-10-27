@@ -18,7 +18,8 @@ void main() {
 
     // gl_FragColor : 片元着色器的内置变量
     gl_FragColor = v_color;
+    //gl_FragColor = vec4(0.2, 1, 0.2, 1);
 
     // 将颜色部分（不包括 alpha）和 光照相乘
-    gl_FragCoord.rgb *= light;
+    gl_FragColor.rgb *= light;
 }
