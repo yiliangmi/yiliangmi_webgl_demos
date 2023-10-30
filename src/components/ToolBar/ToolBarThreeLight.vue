@@ -1,6 +1,6 @@
 <template>
   <div class="operation-wrap">
-   <!-- <el-row :gutter="20" class="operation-item">
+    <el-row :gutter="20" class="operation-item">
       <el-col :span="4"><div class="demonstration">垂直视角</div></el-col>
       <el-col :span="16"><el-slider v-model="form.fieldOfView" :min="1" :max="179" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.fieldOfView}}</div></el-col>
@@ -34,13 +34,13 @@
       <el-col :span="4"><div class="demonstration">绕x轴旋转</div></el-col>
       <el-col :span="16"><el-slider v-model="form.angleXVal" :min="0" :max="360" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.angleXVal}}</div></el-col>
-    </el-row>-->
+    </el-row>
     <el-row :gutter="20" class="operation-item">
       <el-col :span="4"><div class="demonstration">绕y轴旋转</div></el-col>
       <el-col :span="16"><el-slider v-model="form.angleYVal" :min="0" :max="360" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.angleYVal}}</div></el-col>
     </el-row>
-   <!-- <el-row :gutter="20" class="operation-item">
+    <el-row :gutter="20" class="operation-item">
       <el-col :span="4"><div class="demonstration">绕z轴旋转</div></el-col>
       <el-col :span="16"><el-slider v-model="form.angleZVal" :min="0" :max="360" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.angleZVal}}</div></el-col>
@@ -59,7 +59,7 @@
       <el-col :span="4"><div class="demonstration">z轴方向缩放</div></el-col>
       <el-col :span="16"><el-slider v-model="form.scaleZVal" :min="-5" :max="5" :step="0.01" @input="handleInput"></el-slider></el-col>
       <el-col :span="4"><div class="demonstration">{{form.scaleZVal}}</div></el-col>
-    </el-row>-->
+    </el-row>
   </div>
 </template>
 

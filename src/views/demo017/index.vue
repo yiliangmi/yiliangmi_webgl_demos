@@ -173,13 +173,13 @@ export default {
       mat4.lookAt(this.worldMatrix, cameraPosition, cameraTarget, up);
 
      // 2.设置平移矩阵
-      //this.worldMatrix = mat4.translate(this.worldMatrix, this.worldMatrix, [this.sliderBar.xVal, this.sliderBar.yVal, this.sliderBar.zVal]);
+      this.worldMatrix = mat4.translate(this.worldMatrix, this.worldMatrix, [this.sliderBar.xVal, this.sliderBar.yVal, this.sliderBar.zVal]);
       // 3.设置旋转矩阵
-      //this.worldMatrix = mat4.rotateX(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleXVal))
+      this.worldMatrix = mat4.rotateX(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleXVal))
       this.worldMatrix = mat4.rotateY(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleYVal))
-      //this.worldMatrix = mat4.rotateZ(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleZVal))
+      this.worldMatrix = mat4.rotateZ(this.worldMatrix, this.worldMatrix, glMatrix.toRadian(this.sliderBar.angleZVal))
       // 4.设置缩放矩阵
-      //this.worldMatrix = mat4.scale(this.worldMatrix, this.worldMatrix, [this.sliderBar.scaleXVal, this.sliderBar.scaleYVal, this.sliderBar.scaleZVal]);
+      this.worldMatrix = mat4.scale(this.worldMatrix, this.worldMatrix, [this.sliderBar.scaleXVal, this.sliderBar.scaleYVal, this.sliderBar.scaleZVal]);
 
       // 3、计算视图投影矩阵
       this.worldViewProjectionMatrix = mat4.multiply(this.worldViewProjectionMatrix, projectionMatrix, this.worldMatrix);
