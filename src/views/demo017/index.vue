@@ -21,7 +21,7 @@ import ToolBarThreeLight from "@/components/ToolBar/ToolBarThreeLight.vue";
 import fShaderSource from './shaders/fShader.glsl';
 import vShaderSource from './shaders/vShader.glsl';
 import {resizeCanvasToDisplaySize} from "@/utils/myCommon";
-import {mat4, glMatrix, vec3, mat3} from "gl-matrix";
+import {mat4, glMatrix, vec3, mat3, vec4} from "gl-matrix";
 
 export default {
   name: "index",
@@ -208,7 +208,7 @@ export default {
       let uReverseLightDirectionLocation  = this.gl.getUniformLocation(this.shaderProgram, 'u_reverseLightDirection');
       // 设置光线方向的值
       let normalizeLightDirection = vec3.create();
-      normalizeLightDirection = vec3.normalize(normalizeLightDirection, [0.5, 0.7, 1]);
+      normalizeLightDirection = vec3.normalize(normalizeLightDirection, [1, 1, 1]);
       this.gl.uniform3fv(uReverseLightDirectionLocation, normalizeLightDirection);
     },
     /**
@@ -347,6 +347,19 @@ export default {
         0, 150, 30,
         0, 150, 0
       ]
+
+
+      var matrix = mat4.create();
+      mat4.rotateX(matrix,matrix, Math.PI);
+      matrix = mat4.translate(matrix, matrix, [-50, -75, -15]);
+
+      for (var ii = 0; ii < fVertex.length; ii += 3) {
+        let vector = vec4.create();
+        vec4.transformMat4(vector, [fVertex[ii + 0], fVertex[ii + 1], fVertex[ii + 2], 1], matrix);
+        fVertex[ii + 0] = vector[0];
+        fVertex[ii + 1] = vector[1];
+        fVertex[ii + 2] = vector[2];
+      }
 
       // 创建字母F的缓冲区
       this.fVertexBuffer = this.gl.createBuffer();
